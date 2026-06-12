@@ -3,7 +3,7 @@ import httpx
 import os
 
 app = FastAPI()
-API_KEY = os.getenv"94d2f6a0743159e79b0c2e587b720748" 
+API_KEY = "94d2f6a0743159e79b0c2e587b720748" 
 
 @app.get("/fixtures")
 async def get_fixtures(date: str, timezone: str):
