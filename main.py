@@ -3,12 +3,21 @@ import httpx
 import os
 
 app = FastAPI()
+API_KEY = os.getenv("API_KEY") 
 
-@app.get("/api/matchs")
-async def get_matchs():
+@app.get("/fixtures")
+async def get_fixtures(date: str, timezone: str):
+    url = f"https://v3.football.api-sports.io/fixtures?date={date}&timezone={timezone}"
+    headers = {'x-rapidapi-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io'}
     async with httpx.AsyncClient() as client:
-        # Remplacez VOTRE_CLE_API par votre clé réelle
-        headers = {'x-rapidapi-key': 'VOTRE_CLE_API'}
-        resp = await client.get("https://v3.football.api-sports.io/fixtures?date=2026-06-12&timezone=UTC", headers=headers)
-        return resp.json()
+        response = await client.get(url, headers=headers)
+        return response.json()
+
+@app.get("/predictions")
+async def get_predictions(fixture: int):
+    url = f"https://v3.football.api-sports.io/predictions?fixture={fixture}"
+    headers = {'x-rapidapi-key': API_KEY, 'x-rapidapi-host': 'v3.football.api-sports.io'}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+        return response.json()
 
