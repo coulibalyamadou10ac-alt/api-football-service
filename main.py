@@ -8,7 +8,7 @@ app = FastAPI()
 cache = {"data": None, "timestamp": 0}
 CACHE_DURATION = 3600  # 1 heure
 
-API_KEY = "94d2f6a0743159e79b0c2e587b720748" # Votre clé RapidAPI ici
+API_KEY = "c55fcbcaa34a9f0d9379a2a8272f6354" # Votre clé RapidAPI ici
 
 @app.get("/fixtures")
 async def get_fixtures(date: str, timezone: str = "UTC"):
