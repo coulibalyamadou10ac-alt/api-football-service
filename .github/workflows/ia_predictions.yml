@@ -19,7 +19,7 @@ jobs:
           node-version: '18'
 
       - name: Installer la bibliothèque Supabase
-        run: npm install @supabase/supabase-client
+        run: npm install @supabase/supabase-js
 
       - name: Exécuter l'IA et envoyer sur Supabase
         run: node predict.js
