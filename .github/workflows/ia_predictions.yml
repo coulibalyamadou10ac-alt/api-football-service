@@ -1,0 +1,30 @@
+name: Générateur de Pronostics IA AFRISTATS
+
+on:
+  schedule:
+    # S'exécute automatiquement tous les jours à 4h00 du matin UTC
+    - cron: '0 4 * * *' 
+  workflow_dispatch: # Vous permet de lancer le script manuellement depuis GitHub quand vous voulez
+
+jobs:
+  run-ia:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code du projet
+        uses: actions/checkout@v3
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Installer la bibliothèque Supabase
+        run: npm install @supabase/supabase-client
+
+      - name: Exécuter l'IA et envoyer sur Supabase
+        run: node predict.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+
