@@ -2,12 +2,15 @@ import os
 import math
 import requests
 
-# Configuration des accès Supabase
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+# Configuration et nettoyage automatique des variables
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+if not SUPABASE_KEY:
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_KEY = SUPABASE_KEY.strip()
 
-# Clé API Football-Data
-API_KEY = "ab34fe24c4534dc09ee0bff526c06c77"
+# Clé API Football-Data.org
+API_KEY = "ab34fe24c4534dc09ee0bff526c0c77"
 
 def loi_poisson(lam, k):
     """Calcule la probabilité mathématique d'avoir précisément 'k' buts."""
@@ -45,6 +48,17 @@ def executer_pronostics_vip():
     fixtures = response.json().get("matches", [])
     print(f"Analyse statistique en cours pour {len(fixtures)} matchs...")
     
+    # Construction de l'URL conforme à l'API REST Supabase
+    url_base = SUPABASE_URL if SUPABASE_URL.endswith("/") else f"{SUPABASE_URL}/"
+    url_api = f"{url_base}rest/v1/predictions"
+    
+    headers_supabase = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+    }
+    
     for match in fixtures:
         match_id = str(match.get("id"))
         home_name = match.get("homeTeam", {}).get("name")
@@ -75,18 +89,9 @@ def executer_pronostics_vip():
         
         try:
             print(f"[VIP] Calculé : {home_name} {home_score}-{away_score} {away_name} (Confiance : {confiance})")
-            
-            url_api = f"{SUPABASE_URL}/predictions"
-            headers_supabase = {
-                "apikey": SUPABASE_KEY,
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type": "application/json",
-                "Prefer": "resolution=merge-duplicates"
-            }
-            
-            req = requests.post(url_api, headers=headers_supabase, json=donnees_match, timeout=10)
-            if req.status_code not in [200, 201]:
-                print(f"Erreur Supabase ({req.status_code}) : {req.text}")
+            res = requests.post(url_api, headers=headers_supabase, json=donnees_match, timeout=15)
+            if res.status_code not in [200, 201]:
+                print(f"Erreur Supabase ({res.status_code}) : {res.text}")
         except Exception as e:
             print(f"Erreur d'insertion pour le match {match_id} : {e}")
 
