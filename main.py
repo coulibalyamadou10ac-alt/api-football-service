@@ -1,16 +1,13 @@
 import os
 import math
 import requests
-from supabase import create_client, Client
 
 # Configuration des accès Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
-# METS TA CLÉ FOOTBALL-DATA.ORG ICI
-API_KEY = "ab34fe24c4534dc09ee0bff526c06c77"
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Clé API Football-Data
+API_KEY = " ab34fe24c4534dc09ee0bff526c06c77"
 
 def loi_poisson(lam, k):
     """Calcule la probabilité mathématique d'avoir précisément 'k' buts."""
@@ -76,10 +73,9 @@ def executer_pronostics_vip():
             "confiance_score": confiance
         }
         
-               try:
+        try:
             print(f"[VIP] Calculé : {home_name} {home_score}-{away_score} {away_name} (Confiance : {confiance})")
             
-            # Envoi direct via l'API REST de Supabase pour éviter l'erreur de chemin
             url_api = f"{SUPABASE_URL}/rest/v1/predictions"
             headers_supabase = {
                 "apikey": SUPABASE_KEY,
