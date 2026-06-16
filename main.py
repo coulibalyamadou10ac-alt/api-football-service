@@ -1,15 +1,16 @@
 import os
 import math
 import requests
+from datetime import datetime, timedelta
 
-# Configuration et nettoyage automatique des variables
+# 1. Configuration et nettoyage automatique des variables Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 if not SUPABASE_KEY:
     SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 SUPABASE_KEY = SUPABASE_KEY.strip()
 
-# Clé API Football-Data.org
+# 2. Clé API Football-Data.org
 API_KEY = "ab34fe24c4534dc09ee0bff526c0c77"
 
 def loi_poisson(lam, k):
@@ -37,18 +38,36 @@ def calculer_score_exact_vip(att_dom, def_ext, att_ext, def_dom, moy_buts_dom=1.
     return best_home_score, best_away_score, f"{confiance}%"
 
 def executer_pronostics_vip():
-    url = "https://api.football-data.org/v4/matches"
+    # Définition d'une plage de date (Aujourd'hui à J+3) pour éviter l'erreur 400 sur la requête globale
+    date_debut = datetime.utcnow().strftime("%Y-%m-%d")
+    date_fin = (datetime.utcnow() + timedelta(days=3)).strftime("%Y-%m-%d")
+    
+    # URL avec filtres temporels acceptés par l'API Football-Data
+    url = f"https://api.football-data.org/v4/matches?dateFrom={date_debut}&dateTo={date_fin}"
     headers = {"X-Auth-Token": API_KEY}
     
+    print(f"Requête Football-Data : {url}")
     response = requests.get(url, headers=headers, timeout=20)
+    
+    # Si la requête globale échoue encore, on tente un repli sur la liste générale des matchs
+    if response.status_code == 400:
+        print("Ajustement de la requête suite à l'erreur 400 (Tentative sans filtres)...")
+        url_fallback = "https://api.football-data.org/v4/matches"
+        response = requests.get(url_fallback, headers=headers, timeout=20)
+
     if response.status_code != 200:
         print(f"Erreur Football-Data.org : {response.status_code}")
+        print(f"Détails de l'erreur : {response.text}")
         return
         
     fixtures = response.json().get("matches", [])
+    if not fixtures:
+        print("Aucun match trouvé pour la période sélectionnée.")
+        return
+        
     print(f"Analyse statistique en cours pour {len(fixtures)} matchs...")
     
-    # Construction de l'URL conforme à l'API REST Supabase
+    # Construction propre et robuste de l'URL pour l'API REST de Supabase
     url_base = SUPABASE_URL if SUPABASE_URL.endswith("/") else f"{SUPABASE_URL}/"
     url_api = f"{url_base}rest/v1/predictions"
     
@@ -68,6 +87,7 @@ def executer_pronostics_vip():
         if not home_name or not away_name:
             continue
             
+        # Simulation basique des coefficients d'attaque/défense basée sur les IDs
         att_domicile = 1.2 if match.get("homeTeam", {}).get("id", 0) % 2 == 0 else 0.9
         def_exterieur = 1.1 if match.get("awayTeam", {}).get("id", 0) % 3 == 0 else 0.8
         att_exterieur = 1.0
@@ -97,4 +117,3 @@ def executer_pronostics_vip():
 
 if __name__ == "__main__":
     executer_pronostics_vip()
-
