@@ -84,9 +84,9 @@ def executer_pronostics_vip():
             "confiance_score": confiance    # Aligné sur ta table Supabase
         }
         
-        try:
+                       try:
             print(f"[VIP] Calculé : {home_name} {home_score}-{away_score} {away_name} (Confiance : {confiance})")
-            supabase.table("predictions").upsert(donnees_match).execute()
+            supabase.schema("public").table("predictions").upsert(donnees_match).execute()
         except Exception as e:
             print(f"Erreur d'insertion pour le match {match_id} : {e}")
 
