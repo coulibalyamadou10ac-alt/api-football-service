@@ -11,7 +11,7 @@ if not SUPABASE_KEY:
 SUPABASE_KEY = SUPABASE_KEY.strip()
 
 # 2. Clé API Football-Data.org
-API_KEY = "ab34fe24c4534dc09ee0bff526c0c77"
+API_KEY = "ab34fe24c4534dc09ee0bff526c06c77"
 
 def loi_poisson(lam, k):
     """Calcule la probabilité mathématique d'avoir précisément 'k' buts."""
