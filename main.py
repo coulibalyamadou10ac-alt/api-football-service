@@ -68,8 +68,8 @@ def executer_pronostics_vip():
             "home_team": home_name,
             "away_team": away_name,
             "match_date": match_date,
-            "predicted_home_": home_score,
-            "predicted_away_": away_score,
+            "predicted_home": home_score,
+            "predicted_away": away_score,
             "confiance_score": confiance
         }
         
