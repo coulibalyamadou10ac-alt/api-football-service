@@ -76,9 +76,21 @@ def executer_pronostics_vip():
             "confiance_score": confiance
         }
         
-        try:
+               try:
             print(f"[VIP] Calculé : {home_name} {home_score}-{away_score} {away_name} (Confiance : {confiance})")
-            supabase.schema("public").table("Predictions").upsert(donnees_match).execute()
+            
+            # Envoi direct via l'API REST de Supabase pour éviter l'erreur de chemin
+            url_api = f"{SUPABASE_URL}/rest/v1/predictions"
+            headers_supabase = {
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates"
+            }
+            
+            req = requests.post(url_api, headers=headers_supabase, json=donnees_match, timeout=10)
+            if req.status_code not in [200, 201]:
+                print(f"Erreur Supabase ({req.status_code}) : {req.text}")
         except Exception as e:
             print(f"Erreur d'insertion pour le match {match_id} : {e}")
 
