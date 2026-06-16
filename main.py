@@ -68,15 +68,15 @@ def executer_pronostics_vip():
             "home_team": home_name,
             "away_team": away_name,
             "match_date": match_date,
-            "predicted_home": home_score,
-            "predicted_away": away_score,
+            "predicted_home_score": home_score,
+            "predicted_away_score": away_score,
             "confiance_score": confiance
         }
         
         try:
             print(f"[VIP] Calculé : {home_name} {home_score}-{away_score} {away_name} (Confiance : {confiance})")
             
-            url_api = f"{SUPABASE_URL}/rest/v1/predictions"
+            url_api = f"{SUPABASE_URL}/predictions"
             headers_supabase = {
                 "apikey": SUPABASE_KEY,
                 "Authorization": f"Bearer {SUPABASE_KEY}",
