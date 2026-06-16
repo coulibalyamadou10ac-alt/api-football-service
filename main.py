@@ -18,7 +18,6 @@ def loi_poisson(lam, k):
 
 def calculer_score_exact_vip(att_dom, def_ext, att_ext, def_dom, moy_buts_dom=1.5, moy_buts_ext=1.2):
     """Calcule mathématiquement le score exact le plus probable pour l'Espace VIP."""
-    # Calcul des espérances de buts (Lambda) pour chaque équipe
     lambda_home = att_dom * def_ext * moy_buts_dom
     lambda_away = att_ext * def_dom * moy_buts_ext
     
@@ -26,7 +25,6 @@ def calculer_score_exact_vip(att_dom, def_ext, att_ext, def_dom, moy_buts_dom=1.
     best_home_score = 1
     best_away_score = 1
     
-    # On teste les scores de 0-0 à 4-4 pour trouver la probabilité maximale
     for h in range(5):
         for a in range(5):
             prob = loi_poisson(lambda_home, h) * loi_poisson(lambda_away, a)
@@ -35,12 +33,10 @@ def calculer_score_exact_vip(att_dom, def_ext, att_ext, def_dom, moy_buts_dom=1.
                 best_home_score = h
                 best_away_score = a
                 
-    # Conversion de la probabilité brute en pourcentage de confiance VIP
     confiance = min(int(max_prob * 300) + 60, 98) 
     return best_home_score, best_away_score, f"{confiance}%"
 
 def executer_pronostics_vip():
-    # Récupération des prochains matchs programmés
     url = "https://api.football-data.org/v4/matches"
     headers = {"X-Auth-Token": API_KEY}
     
@@ -61,15 +57,11 @@ def executer_pronostics_vip():
         if not home_name or not away_name:
             continue
             
-        # EXTRACTION DES VRAIES PERFORMANCES (ou valeurs par défaut basées sur le classement de l'API)
-        # Plus l'équipe est haute ou en forme, plus ses coefficients d'attaque augmentent
-        # Pour Football-Data gratuit, on génère un profil basé sur l'historique disponible
         att_domicile = 1.2 if match.get("homeTeam", {}).get("id", 0) % 2 == 0 else 0.9
         def_exterieur = 1.1 if match.get("awayTeam", {}).get("id", 0) % 3 == 0 else 0.8
         att_exterieur = 1.0
         def_domicile = 1.0
         
-        # Calcul scientifique du score exact
         home_score, away_score, confiance = calculer_score_exact_vip(
             att_domicile, def_exterieur, att_exterieur, def_domicile
         )
@@ -79,12 +71,12 @@ def executer_pronostics_vip():
             "home_team": home_name,
             "away_team": away_name,
             "match_date": match_date,
-            "predicted_home_": home_score,  # Aligné sur ta table Supabase
-            "predicted_away_": away_score,  # Aligné sur ta table Supabase
-            "confiance_score": confiance    # Aligné sur ta table Supabase
+            "predicted_home_": home_score,
+            "predicted_away_": away_score,
+            "confiance_score": confiance
         }
         
-                       try:
+        try:
             print(f"[VIP] Calculé : {home_name} {home_score}-{away_score} {away_name} (Confiance : {confiance})")
             supabase.schema("public").table("predictions").upsert(donnees_match).execute()
         except Exception as e:
