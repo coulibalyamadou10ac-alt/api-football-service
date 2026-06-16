@@ -7,7 +7,7 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
 # Clé API Football-Data
-API_KEY = " ab34fe24c4534dc09ee0bff526c06c77"
+API_KEY = "ab34fe24c4534dc09ee0bff526c06c77"
 
 def loi_poisson(lam, k):
     """Calcule la probabilité mathématique d'avoir précisément 'k' buts."""
