@@ -8,68 +8,63 @@ const supabase = createClient(
   { realtime: { transport: WebSocket } }
 );
 
+// Les 3 ligues majeures les plus actives et accessibles gratuitement
+const LEAGUES = ['PL', 'PD', 'FL1', 'BL1', 'SA', 'CL'];
+
 async function runPrediction() {
   try {
-    console.log("Démarrage du scan global des matchs disponibles (Plan Gratuit)...");
+    console.log("Extraction forcée des matchs du jour (Plan Gratuit)...");
+    let allMatches = [];
 
-    // Appel sans filtre de date sur l'URL pour forcer l'API à donner son flux standard
-    const url = 'https://api.football-data.org/v4/matches';
-    
-    const response = await axios.get(url, {
-      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_API_KEY }
-    });
-    
-    const matches = response.data.matches || [];
-    console.log(`Nombre total de matchs bruts récupérés : ${matches.length}`);
-
-    if (matches.length === 0) {
-      console.log("L'API n'a renvoyé aucun match globalement.");
-      return;
+    // On parcourt les ligues une par une pour récupérer TOUS leurs matchs planifiés
+    for (const league of LEAGUES) {
+      try {
+        const url = `https://api.football-data.org/v4/competitions/${league}/matches?status=SCHEDULED`;
+        const response = await axios.get(url, {
+          headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_API_KEY }
+        });
+        
+        if (response.data.matches) {
+          allMatches = allMatches.concat(response.data.matches);
+        }
+        // Pause pour respecter le quota de la clé gratuite
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } catch (err) {
+        console.log(`Ligue ${league} indisponible ou fin de saison.`);
+      }
     }
 
-    // Récupération des dates de début et de fin de la journée d'aujourd'hui en UTC
-    const today = new Date();
-    const startOfToday = new Date(today.setHours(0, 0, 0, 0));
-    const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+    console.log(`Nombre total de matchs futurs récupérés : ${allMatches.length}`);
 
-    // Sélection : Matchs prévus aujourd'hui ET qui ne sont pas terminés
-    const todayMatches = matches.filter(match => {
-      const matchDate = new Date(match.utcDate);
-      const isToday = matchDate >= startOfToday && matchDate <= endOfToday;
-      const isNotFinished = match.status !== 'FINISHED';
-      return isToday && isNotFinished;
-    });
+    // Filtre : On isole uniquement les matchs qui se jouent AUJOURD'HUI
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayMatches = allMatches.filter(match => match.utcDate.startsWith(todayStr));
 
-    console.log(`Matchs restants à jouer aujourd'hui : ${todayMatches.length}`);
+    console.log(`Matchs identifiés pour aujourd'hui (${todayStr}) : ${todayMatches.length}`);
 
     if (todayMatches.length === 0) {
-      console.log("Aucun match à venir trouvé spécifiquement pour aujourd'hui dans ce flux.");
+      console.log("Aucun match de prévu aujourd'hui dans les ligues gratuites.");
       return;
     }
 
-    // Préparation des lignes pour Supabase
+    // Préparation pour Supabase
     const predictions = todayMatches.map(match => ({
       match_id: match.id.toString(),
       home_team: match.homeTeam.name,
       away_team: match.awayTeam.name,
       match_date: match.utcDate,
-      prediction: "Analyse en attente", 
+      prediction: "Analyse IA en attente", 
       created_at: new Date().toISOString()
     }));
 
-    // Insertion dans votre table 'predictions'
+    // Insertion
     const { error: insertError } = await supabase.from('predictions').insert(predictions);
     if (insertError) throw insertError;
 
-    console.log(`${predictions.length} match(s) du jour enregistré(s) avec succès !`);
+    console.log(`${predictions.length} match(s) enregistré(s) avec succès !`);
 
   } catch (error) {
-    console.error("Erreur lors de l'exécution :");
-    if (error.response) {
-      console.error("Détails API :", JSON.stringify(error.response.data));
-    } else {
-      console.error(error.message);
-    }
+    console.error("Erreur générale :", error.message);
     process.exit(1);
   }
 }
