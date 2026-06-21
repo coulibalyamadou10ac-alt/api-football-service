@@ -18,7 +18,7 @@ jobs:
           node-version: 20
 
       - name: Installer les dépendances
-        run: npm install @supabase/supabase-js axios
+        run: npm install @supabase/supabase-js axios ws
 
       - name: Lancer l'algorithme intelligent
         env:
