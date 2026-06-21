@@ -36,7 +36,7 @@ async function runPrediction() {
 
     // 4. Envoi des résultats vers votre base de données Supabase
     const { data, error } = await supabase
-      .from('pronostics') // Assurez-vous que le nom de la table est correct
+      .from('predictions') // Assurez-vous que le nom de la table est correct
       .insert(predictions);
 
     if (error) throw error;
