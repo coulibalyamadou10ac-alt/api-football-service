@@ -8,42 +8,32 @@ const supabase = createClient(
   { realtime: { transport: WebSocket } }
 );
 
-// Les 3 ligues majeures les plus actives et accessibles gratuitement
-const LEAGUES = ['PL', 'PD', 'FL1', 'BL1', 'SA', 'CL'];
-
 async function runPrediction() {
   try {
-    console.log("Extraction forcée des matchs du jour (Plan Gratuit)...");
-    let allMatches = [];
+    console.log("Extraction ciblée sur la Coupe du Monde (WC)...");
 
-    // On parcourt les ligues une par une pour récupérer TOUS leurs matchs planifiés
-    for (const league of LEAGUES) {
-      try {
-        const url = `https://api.football-data.org/v4/competitions/${league}/matches?status=SCHEDULED`;
-        const response = await axios.get(url, {
-          headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_API_KEY }
-        });
-        
-        if (response.data.matches) {
-          allMatches = allMatches.concat(response.data.matches);
-        }
-        // Pause pour respecter le quota de la clé gratuite
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      } catch (err) {
-        console.log(`Ligue ${league} indisponible ou fin de saison.`);
-      }
-    }
-
-    console.log(`Nombre total de matchs futurs récupérés : ${allMatches.length}`);
+    // On demande tous les matchs de la Coupe du Monde à l'API
+    const url = 'https://api.football-data.org/v4/competitions/WC/matches';
+    const response = await axios.get(url, {
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_DATA_API_KEY }
+    });
+    
+    const matches = response.data.matches || [];
+    console.log(`Nombre total de matchs de Coupe du Monde trouvés : ${matches.length}`);
 
     // Filtre : On isole uniquement les matchs qui se jouent AUJOURD'HUI
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayMatches = allMatches.filter(match => match.utcDate.startsWith(todayStr));
+    const todayMatches = matches.filter(match => {
+      const matchDateStr = match.utcDate.split('T')[0];
+      const isToday = matchDateStr === todayStr;
+      const isNotFinished = match.status !== 'FINISHED';
+      return isToday && isNotFinished;
+    });
 
-    console.log(`Matchs identifiés pour aujourd'hui (${todayStr}) : ${todayMatches.length}`);
+    console.log(`Matchs de Coupe du Monde restants pour aujourd'hui (${todayStr}) : ${todayMatches.length}`);
 
     if (todayMatches.length === 0) {
-      console.log("Aucun match de prévu aujourd'hui dans les ligues gratuites.");
+      console.log("Aucun match de Coupe du Monde prévu ou restant à jouer aujourd'hui.");
       return;
     }
 
@@ -53,11 +43,11 @@ async function runPrediction() {
       home_team: match.homeTeam.name,
       away_team: match.awayTeam.name,
       match_date: match.utcDate,
-      prediction: "Analyse IA en attente", 
+      prediction: "Analyse en attente", 
       created_at: new Date().toISOString()
     }));
 
-    // Insertion
+    // Insertion dans Supabase
     const { error: insertError } = await supabase.from('predictions').insert(predictions);
     if (insertError) throw insertError;
 
