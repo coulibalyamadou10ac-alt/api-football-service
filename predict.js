@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-client');
+const { createClient } = require('@supabase/supabase-js');
 
 // Récupération des clés d'accès sécurisées depuis GitHub
 const SUPABASE_URL = process.env.SUPABASE_URL;
